@@ -1,0 +1,53 @@
+# .github/workflows/deploy.yml
+
+name: Deploy Vendor Panel to Azure VM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy and Build on Server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.AZURE_HOST }}
+        username: ${{ secrets.AZURE_USERNAME }}
+        key: ${{ secrets.AZURE_SSH_KEY }}
+        script: |
+          # Go to the new project directory
+          cd /home/azureuser/ecom_vendor
+
+          # Pull the latest code
+          echo "Pulling latest code..."
+          git pull origin main
+
+          # Source NVM to make npm available
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+          # Install dependencies
+          echo "Installing npm packages..."
+          npm install
+
+          # Remove the old dist folder
+          echo "Removing old build directory..."
+          sudo rm -rf dist
+
+          # Build the application
+          echo "Building the application..."
+          npm run build
+
+          # Set permissions for Nginx
+          echo "Setting permissions..."
+          sudo chown -R www-data:www-data dist
+          sudo chmod -R 755 dist
+
+          echo "Vendor panel deployment successful!"
