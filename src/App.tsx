@@ -36,7 +36,7 @@ export default function App() {
   return (
     <Provider store={store}>
       <AuthProvider>
-        <Router basename="/vendor">
+        <Router basename="/">
           <Toaster
             position="top-right"
             toastOptions={{
